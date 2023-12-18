@@ -1,4 +1,5 @@
 import { openam_url } from "../env";
+import { retryFetch } from "./retryFetch";
 
 // ログイン時のトークン取得
 const getTokenId = async ({
@@ -8,10 +9,9 @@ const getTokenId = async ({
   id: string;
   password: string;
 }) => {
-
   console.log("[*] 一時トークンを取得します...");
   // まずログイン用の一時トークンの取得
-  const result_1 = await fetch(`${openam_url}/json/authenticate`, {
+  const result_1 = await retryFetch(`${openam_url}/json/authenticate`, {
     method: "POST",
   });
 
@@ -30,7 +30,7 @@ const getTokenId = async ({
   console.log("[*] 本トークンを取得します...");
 
   // 一時トークンを使って本トークンを取得
-  const result_2 = await fetch(`${openam_url}/json/authenticate`, {
+  const result_2 = await retryFetch(`${openam_url}/json/authenticate`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
