@@ -8,18 +8,26 @@ const getTokenId = async ({
   id: string;
   password: string;
 }) => {
+
+  console.log("[*] 一時トークンを取得します...");
   // まずログイン用の一時トークンの取得
   const result_1 = await fetch(`${openam_url}/json/authenticate`, {
     method: "POST",
   });
 
   if (!result_1.ok) {
+    console.error("[!] エラーが発生しました");
+    console.error("[*] レスポンスのテキストを表示します");
+    console.error(await result_1.text());
     throw new Error(result_1.statusText);
   }
 
   const { authId } = (await result_1.json()) as {
     authId: string;
   };
+
+  console.log("[*] 一時トークンを取得しました");
+  console.log("[*] 本トークンを取得します...");
 
   // 一時トークンを使って本トークンを取得
   const result_2 = await fetch(`${openam_url}/json/authenticate`, {
@@ -66,6 +74,9 @@ const getTokenId = async ({
   });
 
   if (!result_2.ok) {
+    console.error("[!] エラーが発生しました");
+    console.error("[*] レスポンスのテキストを表示します");
+    console.error(await result_2.text());
     throw new Error(result_2.statusText);
   }
 
