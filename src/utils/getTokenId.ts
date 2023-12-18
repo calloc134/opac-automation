@@ -67,7 +67,6 @@ const getTokenId = async ({
               value: password,
             },
           ],
-          echoPassword: false,
         },
       ],
     }),
