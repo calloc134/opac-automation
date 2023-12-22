@@ -10,7 +10,7 @@ const getJSESSIONID = async ({
   token_id: string;
   shibboleth_session: string;
   params: { mail: string; GakuNinEncryptedTime: string };
-}): Promise<{ JSESSIONID: string }> => {
+}): Promise<{ opac_sessionid: string }> => {
   console.log("[*] 図書館システムで利用するJSESSIONIDを取得します...");
 
   const result = await retryFetch(`${iliswave_url}/webopac/gakursv.do`, {
@@ -58,7 +58,7 @@ const getJSESSIONID = async ({
   console.log("[*] JSESSIONIDを取得しました");
   // console.debug(JSESSIONID[1]);
 
-  return { JSESSIONID: JSESSIONID[1] };
+  return { opac_sessionid: JSESSIONID[1] };
 };
 
 export { getJSESSIONID };

@@ -1,46 +1,16 @@
-import { iliswave_url, password, user_id } from "./env";
-import { getJSESSIONID } from "./utils/getJSESSIONID";
-import { getShibboleth } from "./utils/getShibboleth";
-import { getTokenId } from "./utils/getTokenId";
+import { password, user_id } from "./env";
+import { useOPAC } from "./hooks/useOPAC";
 
 // 図書館を延長するためのスクリプト
 const main = async () => {
-  // まずログイントークンを取得する
-  const { token_id } = await getTokenId({
-    id: user_id,
+  // 図書館システムにログインする
+  const { get_lental_list_html } = await useOPAC({
+    user_id: user_id,
     password: password,
   });
 
-  // 次にShibbolethセッションを取得する
-  // 同時に有効なJSESSIONIDを取得するための情報も取得する
-  const {
-    shibboleth_session,
-    params: { mail, GakuNinEncryptedTime },
-  } = await getShibboleth({
-    token_id: token_id,
-  });
-
-  // 最後に図書館システムで利用できるJSESSIONIDを取得する
-  const { JSESSIONID } = await getJSESSIONID({
-    token_id: token_id,
-    shibboleth_session: shibboleth_session,
-    params: { mail: mail, GakuNinEncryptedTime: GakuNinEncryptedTime },
-  });
-
-  const cookie = `JSESSIONID=${JSESSIONID}; iPlanetDirectoryPro=${token_id}; _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370=${shibboleth_session};`;
-
-  const result = await fetch(`${iliswave_url}/webopac/lenlst.do`, {
-    method: "GET",
-    headers: {
-      Cookie: cookie,
-    },
-  });
-
-  // 正規表現を用いてテーブル部分だけのhtmlを抽出
-  const table_pattern =
-    /<table class="opac_data_list_ex">(.|\n|\r)*?<\/table>/gms;
-
-  const table_html = (await result.text()).match(table_pattern);
+  // htmlを取得する
+  const table_html = await get_lental_list_html();
 
   console.log(table_html);
 };

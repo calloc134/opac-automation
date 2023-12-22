@@ -1,3 +1,4 @@
+// メッセージを送信するためのクロージャ
 const useSender = ({ webhook_url }: { webhook_url: string }) => {
   // コンテキストを定義
   const context = {
