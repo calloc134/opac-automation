@@ -12,6 +12,7 @@ const main = async () => {
   });
 
   // 次にShibbolethセッションを取得する
+  // 同時に有効なJSESSIONIDを取得するための情報も取得する
   const {
     shibboleth_session,
     params: { mail, GakuNinEncryptedTime },
