@@ -82,8 +82,11 @@ const getTokenId = async ({
   const { tokenId } = (await result_2.json()) as {
     tokenId: string;
   };
+  console.log("[*] 本トークンを取得しました");
 
-  return tokenId;
+  return {
+    token_id: tokenId,
+  };
 };
 
 export { getTokenId };

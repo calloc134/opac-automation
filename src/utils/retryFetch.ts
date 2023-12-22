@@ -7,10 +7,17 @@ const retryFetch = async (
 ): Promise<Response> => {
   try {
     const response = await fetch(url, options);
-    if (response.ok) {
-      return response;
+
+    // redirect:manualの場合はとりあえず成功として判定
+    // そうでない場合はresponse.okを使う
+    if (!response.ok && options.redirect !== "manual") {
+      console.log("[!] エラーが発生しました");
+      console.log("[*] レスポンスのテキストを表示します");
+      console.log(await response.text());
+      throw new Error(response.statusText);
     }
-    throw new Error(response.statusText);
+
+    return response;
   } catch (error) {
     if (retryCount <= 0) {
       throw new Error(error);
