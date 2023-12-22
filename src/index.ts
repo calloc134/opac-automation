@@ -26,22 +26,22 @@ const main = async () => {
     params: { mail: mail, GakuNinEncryptedTime: GakuNinEncryptedTime },
   });
 
-  console.debug(token_id);
-  console.debug(shibboleth_session);
-  console.debug(JSESSIONID);
-
   const cookie = `JSESSIONID=${JSESSIONID}; iPlanetDirectoryPro=${token_id}; _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370=${shibboleth_session};`;
 
-  console.debug(cookie);
-
-  const result = await fetch("https://mylib.meijo-u.ac.jp/webopac/asklst.do", {
+  const result = await fetch("https://mylib.meijo-u.ac.jp/webopac/lenlst.do", {
     method: "GET",
     headers: {
       Cookie: cookie,
     },
   });
 
-  console.log(await result.text());
+  // 正規表現を用いてテーブル部分だけのhtmlを抽出
+  const table_pattern =
+    /<table class="opac_data_list_ex">(.|\n|\r)*?<\/table>/gms;
+
+  const table_html = (await result.text()).match(table_pattern);
+
+  console.log(table_html);
 };
 
 main();
