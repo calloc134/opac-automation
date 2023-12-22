@@ -8,7 +8,7 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
   const result_1 = await retryFetch(`${iliswave_url}/eduapi/gknsso/iLiswave`, {
     method: "GET",
     headers: {
-      Cookie: "amlbcookie=01; iPlanetDirectoryPro=" + token_id,
+      Cookie: "iPlanetDirectoryPro=" + token_id,
     },
   });
 
@@ -46,7 +46,7 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Cookie: "amlbcookie=01; iPlanetDirectoryPro=" + token_id,
+        Cookie: "iPlanetDirectoryPro=" + token_id,
       },
       // urlをエンコードする
       // 改行も含まれるので、encodeURIComponentを使う
@@ -81,7 +81,7 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
     method: "GET",
     headers: {
       Cookie:
-        "amlbcookie=01; iPlanetDirectoryPro=" +
+        "iPlanetDirectoryPro=" +
         token_id +
         "; _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370=" +
         shibsession[1],

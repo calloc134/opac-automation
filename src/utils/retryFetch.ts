@@ -22,6 +22,10 @@ const retryFetch = async (
     if (retryCount <= 0) {
       throw new Error(error);
     }
+    // しばらく待ってからリトライする
+    await new Promise((resolve) =>
+      setTimeout(resolve, (1 / retryCount) * 1000)
+    );
     return retryFetch(url, options, retryCount - 1);
   }
 };

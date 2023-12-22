@@ -17,7 +17,7 @@ const getJSESSIONID = async ({
     method: "POST",
     headers: {
       Cookie:
-        "amlbcookie=02; iPlanetDirectoryPro=" +
+        "iPlanetDirectoryPro=" +
         token_id +
         "; _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370=" +
         shibboleth_session,
