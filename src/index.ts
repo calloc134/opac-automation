@@ -1,4 +1,4 @@
-import { password, user_id } from "./env";
+import { iliswave_url, password, user_id } from "./env";
 import { getJSESSIONID } from "./utils/getJSESSIONID";
 import { getShibboleth } from "./utils/getShibboleth";
 import { getTokenId } from "./utils/getTokenId";
@@ -29,7 +29,7 @@ const main = async () => {
 
   const cookie = `JSESSIONID=${JSESSIONID}; iPlanetDirectoryPro=${token_id}; _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370=${shibboleth_session};`;
 
-  const result = await fetch("https://mylib.meijo-u.ac.jp/webopac/lenlst.do", {
+  const result = await fetch(`${iliswave_url}/webopac/lenlst.do`, {
     method: "GET",
     headers: {
       Cookie: cookie,
