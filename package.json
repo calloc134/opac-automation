@@ -11,5 +11,8 @@
   "license": "ISC",
   "devDependencies": {
     "vite-node": "^1.0.4"
+  },
+  "dependencies": {
+    "node-html-parser": "^6.1.11"
   }
 }
