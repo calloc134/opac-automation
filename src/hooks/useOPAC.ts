@@ -35,13 +35,6 @@ const useOPAC = async ({
     params: { mail: mail, GakuNinEncryptedTime: GakuNinEncryptedTime },
   });
 
-  // コンテキストを定義
-  const context = {
-    token_id: token_id,
-    shibboleth_session: shibboleth_session,
-    opac_sessionid: opac_sessionid,
-  };
-
   // 図書館システムにアクセスして本のリストを返却する関数の定義
   const get_lental_list = async () => {
     const cookie = `JSESSIONID=${opac_sessionid}; iPlanetDirectoryPro=${token_id}; _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370=${shibboleth_session};`;
