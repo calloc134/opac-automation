@@ -1,7 +1,5 @@
 import { password, user_id } from "./env";
 import { useOPAC } from "./hooks/useOPAC";
-import { parse } from "node-html-parser";
-import { Book } from "./types/Book";
 
 // 図書館を延長するためのスクリプト
 const main = async () => {

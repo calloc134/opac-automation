@@ -107,7 +107,48 @@ const useOPAC = async ({
     return book_data_list;
   };
 
-  return { get_lental_list };
+  // 任意の延長処理を行う際に必要なapacheトークンを取得する関数
+  const get_apache_token = async () => {
+    const cookie = `JSESSIONID=${opac_sessionid}; iPlanetDirectoryPro=${token_id}; _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370=${shibboleth_session};`;
+
+    const result = await fetch(`${iliswave_url}/webopac/lenlst.do`, {
+      method: "GET",
+      headers: {
+        Cookie: cookie,
+      },
+    });
+
+    const apache_token_pattern =
+      /name="org.apache.struts.taglib.html.TOKEN" value="([0-9a-f]*)"/i;
+
+    const apache_token = (await result.text()).match(apache_token_pattern);
+
+    if (!apache_token || apache_token[1] === undefined) {
+      throw new Error("apacheトークンが取得できませんでした");
+    }
+
+    return apache_token[1];
+  };
+
+  // 指定された書籍IDの本を延長する関数
+  const extend_book = async ({ book_id }: { book_id: string }) => {
+    const apache_token = await get_apache_token();
+
+    const cookie = `JSESSIONID=${opac_sessionid}; iPlanetDirectoryPro=${token_id}; _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370=${shibboleth_session};`;
+
+    const result = await fetch(`${iliswave_url}/webopac/lenupd.do`, {
+      method: "POST",
+      headers: {
+        Cookie: cookie,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `org.apache.struts.taglib.html.TOKEN=${apache_token}&lenidlist=${book_id}&startpos=1&listcnt=20&sortKey=lmtdt/ASC`,
+    });
+
+    // TODO: 延長処理の整備も行う
+  };
+
+  return { get_lental_list, get_apache_token, extend_book };
 };
 
 export { useOPAC };
