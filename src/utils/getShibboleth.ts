@@ -19,10 +19,9 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
     throw new Error(result_1.statusText);
   }
 
-  console.log("[*] SAMLレスポンスを取得しました");
   // XMLエンティティのデコードを行う
   const decoded_text = decodeHTMLEntities(await result_1.text());
-  console.log("[*] XMLエンティティをデコードしました");
+  console.log("[*] SAMLレスポンスのXMLをデコードしました");
 
   // 正規表現でSAMLResponseとRelayStateを取得する
   const saml_response_pattern =

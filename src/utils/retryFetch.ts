@@ -20,11 +20,15 @@ const retryFetch = async (
     return response;
   } catch (error) {
     if (retryCount <= 0) {
+      console.log("[!] リトライ回数を超えました");
       throw new Error(error);
     }
+
+    console.log("[!] エラーが発生しました");
+    console.log("[*] リトライします");
     // しばらく待ってからリトライする
     await new Promise((resolve) =>
-      setTimeout(resolve, (1 / retryCount) * 1000)
+      setTimeout(resolve, (1 / retryCount) * 3000)
     );
     return retryFetch(url, options, retryCount - 1);
   }
