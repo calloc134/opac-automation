@@ -48,7 +48,7 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
         Cookie: "iPlanetDirectoryPro=" + token_id,
       },
       // urlをエンコードする
-      // 改行も含まれるので、encodeURIComponentを使う
+      // URLSearchParamsを使う
       body: new URLSearchParams({
         SAMLResponse: saml_response[1],
         RelayState: relay_state[1],
