@@ -11,9 +11,24 @@ const main = async () => {
 
   const lental_list = await get_lental_list();
 
-  console.log("[*] 延長可能な本のリストを取得しました");
+  console.log("[*] 現在借りている本の一覧を表示します\n");
 
-  console.log(lental_list);
+  for (const book of lental_list) {
+    console.log(`${book.detail}`);
+    console.log(`├── キャンパス: ${book.campus}`);
+    console.log(`├── 貸出日: ${book.lend_date}`);
+    console.log(`└── 返却期限: ${book.return_date}`);
+
+    if (book.status === "延滞") {
+      console.log("[*] この本は延滞しています");
+      console.log("[*] 速やかに返却してください");
+    } else if (book.status === "確認") {
+      console.log("[*] この本は本日が返却期限です");
+      console.log("[*] 延長処理を行います");
+    }
+
+    console.log("");
+  }
 };
 
 main();

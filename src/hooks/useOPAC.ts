@@ -145,7 +145,8 @@ const useOPAC = async ({
       body: `org.apache.struts.taglib.html.TOKEN=${apache_token}&lenidlist=${book_id}&startpos=1&listcnt=20&sortKey=lmtdt/ASC`,
     });
 
-    // TODO: 延長処理の整備も行う
+    // デバッグ用
+    console.debug(await result.text());
   };
 
   return { get_lental_list, get_apache_token, extend_book };
