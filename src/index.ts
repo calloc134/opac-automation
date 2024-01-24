@@ -4,7 +4,7 @@ import { useOPAC } from "./hooks/useOPAC";
 // 図書館を延長するためのスクリプト
 const main = async () => {
   // 図書館システムにログインする
-  const { get_lental_list } = await useOPAC({
+  const { get_lental_list, extend_book } = await useOPAC({
     user_id: user_id,
     password: password,
   });
@@ -15,6 +15,7 @@ const main = async () => {
 
   for (const book of lental_list) {
     console.log(`${book.detail}`);
+    console.log(`├── 書籍番号: ${book.book_id}`);
     console.log(`├── キャンパス: ${book.campus}`);
     console.log(`├── 貸出日: ${book.lend_date}`);
     console.log(`└── 返却期限: ${book.return_date}`);
@@ -26,9 +27,11 @@ const main = async () => {
       console.log("[*] この本は本日が返却期限です");
       console.log("[*] 延長処理を行います");
     }
-
-    console.log("");
   }
+  console.log("延長テスト");
+  const result = await extend_book({
+    book_id: "1392870",
+  });
 };
 
 main();

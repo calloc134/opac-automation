@@ -4,6 +4,7 @@ import { getJSESSIONID } from "../utils/getJSESSIONID";
 import { iliswave_url } from "../env";
 import { parse } from "node-html-parser";
 import { Book } from "../types/Book";
+import { retryFetch } from "../utils/retryFetch";
 
 // 図書館システムへのアクセスを行うクロージャ
 const useOPAC = async ({
@@ -39,7 +40,7 @@ const useOPAC = async ({
   const get_lental_list = async () => {
     const cookie = `JSESSIONID=${opac_sessionid}; iPlanetDirectoryPro=${token_id}; _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370=${shibboleth_session};`;
 
-    const result = await fetch(`${iliswave_url}/webopac/lenlst.do`, {
+    const result = await retryFetch(`${iliswave_url}/webopac/lenlst.do`, {
       method: "GET",
       headers: {
         Cookie: cookie,
@@ -134,19 +135,64 @@ const useOPAC = async ({
   const extend_book = async ({ book_id }: { book_id: string }) => {
     const apache_token = await get_apache_token();
 
+    console.debug(apache_token);
+
     const cookie = `JSESSIONID=${opac_sessionid}; iPlanetDirectoryPro=${token_id}; _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370=${shibboleth_session};`;
 
-    const result = await fetch(`${iliswave_url}/webopac/lenupd.do`, {
-      method: "POST",
-      headers: {
-        Cookie: cookie,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: `org.apache.struts.taglib.html.TOKEN=${apache_token}&lenidlist=${book_id}&startpos=1&listcnt=20&sortKey=lmtdt/ASC`,
-    });
+    const result = await retryFetch(
+      `${iliswave_url}/webopac/lenupd.do?org.apache.struts.taglib.html.TOKEN=${apache_token}&lenidlist=${book_id}&listcnt=20&sortkey=lmtdt/ASC&startpos=1`,
+      {
+        method: "POST",
+        headers: {
+          Cookie: cookie,
+        },
+      }
+    );
 
-    // デバッグ用
-    console.debug(await result.text());
+    const result_text = await result.text();
+
+    // 正規表現で延長結果を取得する
+    const extend_result_pattern =
+      /<p class="opac_description_area">\s*(.*?)\s*<\/p>/g;
+    const extend_error_pattern = /<font color="red"><b>(.*?)<\/b><\/font>/;
+
+    // 二番目の要素を取得するようにする
+    const extend_result_itr = Array.from(
+      result_text.matchAll(extend_result_pattern)
+    );
+    const extend_result = extend_result_itr[1];
+
+    const extend_error = result_text.match(extend_error_pattern);
+
+    console.debug(extend_result);
+    console.debug(extend_error);
+
+    if (!extend_result) {
+      console.error("[!] 延長に失敗しました");
+      console.error(`[!] エラーメッセージ: 不明なエラー`);
+      return;
+    }
+
+    // メッセージによって場合分け
+    // メッセージに"以下の資料の貸出更新に失敗しました。"が含まれている場合はエラー
+    if (extend_result[1].includes("以下の資料の貸出更新に失敗しました。")) {
+      console.error("[!] 延長に失敗しました");
+      console.error(
+        extend_error
+          ? `[!] エラーメッセージ: ${extend_error[1]}`
+          : "[!] 不明なエラー"
+      );
+
+      return;
+    } else if (extend_result[1].includes("以下の資料を貸出更新しました。")) {
+      console.log("[+] 延長に成功しました");
+      return;
+    } else {
+      console.error("[!] 延長に失敗しました");
+      console.error(`[!] エラーメッセージ: 不明なエラー`);
+    }
+
+    return 0;
   };
 
   return { get_lental_list, get_apache_token, extend_book };

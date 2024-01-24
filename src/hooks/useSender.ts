@@ -1,3 +1,5 @@
+import { retryFetch } from "../utils/retryFetch";
+
 // メッセージを送信するためのクロージャ
 const useSender = ({ webhook_url }: { webhook_url: string }) => {
   // コンテキストを定義
@@ -7,7 +9,7 @@ const useSender = ({ webhook_url }: { webhook_url: string }) => {
 
   // データの送信を行う関数の定義
   const send = async (message: string) => {
-    const result = await fetch(context.webhook_url, {
+    const result = await retryFetch(context.webhook_url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
