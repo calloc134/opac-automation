@@ -37,11 +37,7 @@ const initMessageClient = ({ webhook_url }: { webhook_url: string }) => {
         body: JSON.stringify({ content: message }),
       });
 
-      if (!result.ok) {
-        return err({ status: result.status, statusText: result.statusText });
-      }
-
-      return ok(result);
+      return result;
     },
   };
 

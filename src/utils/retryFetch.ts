@@ -1,27 +1,31 @@
+import { ok, err, Result } from "neverthrow";
 // リトライ処理に対応したフェッチ関数
 
 const retryFetch = async (
   url: string,
   options: RequestInit,
   retryCount = 3
-): Promise<Response> => {
+): Promise<Result<Response, { status: number; statusText: string }>> => {
   try {
     const response = await fetch(url, options);
 
     // redirect:manualの場合はとりあえず成功として判定
     // そうでない場合はresponse.okを使う
     if (!response.ok && options.redirect !== "manual") {
-      console.log("[!] エラーが発生しました");
-      console.log("[*] レスポンスのテキストを表示します");
-      console.log(await response.text());
-      throw new Error(response.statusText);
+      console.error("[!] エラーが発生しました");
+      console.error("[*] レスポンスのテキストを表示します");
+      console.error(await response.text());
+      return err({
+        status: response.status,
+        statusText: response.statusText,
+      });
     }
 
-    return response;
+    return ok(response);
   } catch (error) {
     if (retryCount <= 0) {
       console.log("[!] リトライ回数を超えました");
-      throw new Error(error);
+      return err({ status: -1, statusText: "リトライ回数を超えました" });
     }
 
     console.log("[!] エラーが発生しました");

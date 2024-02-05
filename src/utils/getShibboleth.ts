@@ -1,6 +1,7 @@
 import { iliswave_url } from "../env";
 import { retryFetch } from "./retryFetch";
 import { decodeHTMLEntities } from "./decodeHTMLEntities";
+import { err, ok } from "neverthrow";
 
 // Shibbolethセッションを取得する関数の定義
 const getShibboleth = async ({ token_id }: { token_id: string }) => {
@@ -12,15 +13,15 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
     },
   });
 
-  if (!result_1.ok) {
+  if (result_1.isErr()) {
     console.error("[!] エラーが発生しました");
     console.error("[*] レスポンスのテキストを表示します");
-    console.error(await result_1.text());
-    throw new Error(result_1.statusText);
+    console.error(await result_1.error.statusText);
+    return result_1;
   }
 
   // XMLエンティティのデコードを行う
-  const decoded_text = decodeHTMLEntities(await result_1.text());
+  const decoded_text = decodeHTMLEntities(await result_1.value.text());
   console.log("[*] SAMLレスポンスのXMLをデコードしました");
 
   // 正規表現でSAMLResponseとRelayStateを取得する
@@ -57,9 +58,14 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
     }
   );
 
-  const cookie = result_2.headers.get("set-cookie");
+  if (result_2.isErr()) {
+    console.error("[!] エラーが発生しました");
+    console.error("[*] レスポンスのテキストを表示します");
+    console.error(await result_2.error.statusText);
+    return result_2;
+  }
 
-  // console.debug(cookie);
+  const cookie = result_2.value.headers.get("set-cookie");
 
   // クッキーから
   // _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370
@@ -69,11 +75,13 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
   const shibsession = cookie?.match(shibsession_pattern);
 
   if (!shibsession || shibsession[1] === undefined) {
-    throw new Error("[!] Shibbolethセッションが取得できませんでした");
+    return err({
+      status: -1,
+      statusText: "Shibbolethセッションが取得できませんでした",
+    });
   }
 
   console.log("[*] Shibbolethセッションを取得しました");
-  // console.debug(shibsession[1]);
 
   console.log("[*] 必要なパラメータ群を取得します...");
   const result_3 = await retryFetch(`${iliswave_url}/eduapi/gknsso/iLiswave`, {
@@ -87,8 +95,14 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
     },
   });
 
-  const ilis_text = await result_3.text();
-  // console.debug(ilis_text);
+  if (result_3.isErr()) {
+    console.error("[!] エラーが発生しました");
+    console.error("[*] レスポンスのテキストを表示します");
+    console.error(await result_3.error.statusText);
+    return result_3;
+  }
+
+  const ilis_text = await result_3.value.text();
 
   // パラメータの解析
   const mail_pattern = /<input type="hidden" name="mail" value="([^"]+)"/;
@@ -99,20 +113,21 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
   const GakuNinEncryptedTime = ilis_text.match(GakuNinEncryptedTime_pattern);
 
   if (!mail || !GakuNinEncryptedTime) {
-    throw new Error("mailまたはGakuNinEncryptedTimeが取得できませんでした");
+    return err({
+      status: -1,
+      statusText: "mailまたはGakuNinEncryptedTimeが取得できませんでした",
+    });
   }
 
   console.log("[*] 必要なパラメータ群を取得しました");
-  // console.debug(mail[1]);
-  // console.debug(GakuNinEncryptedTime[1]);
 
-  return {
+  return ok({
     shibboleth_session: shibsession[1],
     params: {
       mail: mail[1],
       GakuNinEncryptedTime: GakuNinEncryptedTime[1],
     },
-  };
+  });
 };
 
 export { getShibboleth };

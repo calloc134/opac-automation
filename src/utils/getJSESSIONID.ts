@@ -1,3 +1,4 @@
+import { err, ok } from "neverthrow";
 import { iliswave_url } from "../env";
 import { retryFetch } from "./retryFetch";
 
@@ -10,7 +11,7 @@ const getJSESSIONID = async ({
   token_id: string;
   shibboleth_session: string;
   params: { mail: string; GakuNinEncryptedTime: string };
-}): Promise<{ opac_sessionid: string }> => {
+}) => {
   console.log("[*] 図書館システムで利用するJSESSIONIDを取得します...");
 
   const result = await retryFetch(`${iliswave_url}/webopac/gakursv.do`, {
@@ -31,20 +32,21 @@ const getJSESSIONID = async ({
       GakuNinEncryptedTime,
   });
 
-  if (!result.ok) {
+  if (result.isErr()) {
     console.error("[!] エラーが発生しました");
     console.error("[*] レスポンスのテキストを表示します");
-    console.error(await result.text());
-    throw new Error(result.statusText);
+    console.error(await result.error.statusText);
+    return result;
   }
 
-  // console.debug(result.headers);
-
   // クッキーを取得する
-  const cookie = result.headers.get("set-cookie");
+  const cookie = result.value.headers.get("set-cookie");
 
   if (!cookie) {
-    throw new Error("クッキーが取得できませんでした");
+    return err({
+      status: -1,
+      statusText: "クッキーが取得できませんでした",
+    });
   }
 
   // JSESSIONIDを取得する
@@ -52,13 +54,17 @@ const getJSESSIONID = async ({
   const JSESSIONID = cookie.match(JSESSIONID_pattern);
 
   if (!JSESSIONID || JSESSIONID[1] === undefined) {
-    throw new Error("JSESSIONIDが取得できませんでした");
+    return err({
+      status: -1,
+      statusText: "JSESSIONIDが取得できませんでした",
+    });
   }
 
   console.log("[*] JSESSIONIDを取得しました");
-  // console.debug(JSESSIONID[1]);
 
-  return { opac_sessionid: JSESSIONID[1] };
+  return ok({
+    opac_sessionid: JSESSIONID[1],
+  });
 };
 
 export { getJSESSIONID };

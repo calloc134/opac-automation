@@ -1,5 +1,5 @@
 import { openam_url } from "../env";
-import { retryFetch } from "./retryFetch";
+import { ok, err, Result } from "neverthrow";
 
 // ログイン時のトークン取得
 const getTokenId = async ({
@@ -8,7 +8,9 @@ const getTokenId = async ({
 }: {
   id: string;
   password: string;
-}) => {
+}): Promise<
+  Result<{ tokenId: string }, { status: number; statusText: string }>
+> => {
   // 成功するまでリトライする
   // このとき、回数によってリトライの間隔を変える
   for (let i = 0; i < 3; i++) {
@@ -23,7 +25,10 @@ const getTokenId = async ({
         console.error("[!] エラーが発生しました");
         console.error("[*] レスポンスのテキストを表示します");
         console.error(await result_1.text());
-        throw new Error(result_1.statusText);
+        return err({
+          status: result_1.status,
+          statusText: result_1.statusText,
+        });
       }
 
       const { authId } = (await result_1.json()) as {
@@ -80,7 +85,10 @@ const getTokenId = async ({
         console.error("[!] エラーが発生しました");
         console.error("[*] レスポンスのテキストを表示します");
         console.error(await result_2.text());
-        throw new Error(result_2.statusText);
+        return err({
+          status: result_2.status,
+          statusText: result_2.statusText,
+        });
       }
 
       const { tokenId } = (await result_2.json()) as {
@@ -88,9 +96,9 @@ const getTokenId = async ({
       };
       console.log("[*] 本トークンを取得しました");
 
-      return {
-        token_id: tokenId,
-      };
+      return ok({
+        tokenId,
+      });
     } catch (error) {
       console.log("[!] エラーが発生しました");
       console.log("[*] リトライします");
@@ -98,7 +106,7 @@ const getTokenId = async ({
       await new Promise((resolve) => setTimeout(resolve, (1 / (i + 1)) * 3000));
     }
   }
-  throw new Error("トークンの取得に失敗しました");
+  return err({ status: -1, statusText: "トークンの取得に失敗しました" });
 };
 
 export { getTokenId };
