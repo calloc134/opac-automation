@@ -30,6 +30,9 @@ const main = async () => {
     return;
   }
 
+  // 延長するための本を格納する配列
+  const extend_list: string[] = [];
+
   console.log("[*] 現在借りている本の一覧を表示します\n");
 
   for (const book of lental_list_maybe.value) {
@@ -45,18 +48,30 @@ const main = async () => {
     } else if (book.status === "確認") {
       console.log("[*] この本は本日が返却期限です");
       console.log("[*] 延長処理を行います");
+      extend_list.push(book.book_id);
     }
   }
-  console.log("延長テスト");
-  const result = await OpacClient.extend_book({
-    book_id: "1410856",
-  });
 
-  if (result.isErr()) {
-    console.error("[!] エラーが発生しました");
-    console.error("[*] プログラムを終了します");
+  if (extend_list.length === 0) {
+    console.log("[*] 延長する本がありません");
+    console.log("[*] プログラムを終了します");
     return;
   }
+
+  console.log("[*] 延長処理を開始します");
+
+  for (const book_id of extend_list) {
+    const result = await OpacClient.extend_book({ book_id: book_id });
+
+    if (result.isErr()) {
+      console.error("[!] エラーが発生しました");
+      console.error("[*] プログラムを終了します");
+      return;
+    }
+  }
+
+  console.log("[*] 延長処理が完了しました");
+  console.log("[*] プログラムを終了します");
 };
 
 main();
