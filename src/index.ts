@@ -1,19 +1,38 @@
 import { password, user_id } from "./env";
-import { useOPAC } from "./hooks/useOPAC";
+import { initOpacClient } from "./class/OpacClient";
+import { initMessageClient } from "./class/MessageClient";
 
 // 図書館を延長するためのスクリプト
 const main = async () => {
   // 図書館システムにログインする
-  const { get_lental_list, extend_book } = await useOPAC({
+  const OpacClientMaybe = await initOpacClient({
     user_id: user_id,
     password: password,
   });
 
-  const lental_list = await get_lental_list();
+  if (OpacClientMaybe.isErr()) {
+    console.error("[!] エラーが発生しました");
+    console.error("[*] レスポンスのテキストを表示します");
+    console.error(OpacClientMaybe.error.statusText);
+    console.error("[*] プログラムを終了します");
+    return;
+  }
+
+  const OpacClient = OpacClientMaybe.value;
+
+  const lental_list_maybe = await OpacClient.get_lental_list();
+
+  if (lental_list_maybe.isErr()) {
+    console.error("[!] エラーが発生しました");
+    console.error("[*] レスポンスのテキストを表示します");
+    console.error(lental_list_maybe.error.statusText);
+    console.error("[*] プログラムを終了します");
+    return;
+  }
 
   console.log("[*] 現在借りている本の一覧を表示します\n");
 
-  for (const book of lental_list) {
+  for (const book of lental_list_maybe.value) {
     console.log(`${book.detail}`);
     console.log(`├── 書籍番号: ${book.book_id}`);
     console.log(`├── キャンパス: ${book.campus}`);
@@ -29,9 +48,17 @@ const main = async () => {
     }
   }
   console.log("延長テスト");
-  const result = await extend_book({
-    book_id: "1392870",
+  const result = await OpacClient.extend_book({
+    book_id: "1410856",
   });
+
+  if (result.isErr()) {
+    console.error("[!] エラーが発生しました");
+    console.error("[*] レスポンスのテキストを表示します");
+    console.error(result.error.statusText);
+    console.error("[*] プログラムを終了します");
+    return;
+  }
 };
 
 main();
