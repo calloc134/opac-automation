@@ -14,9 +14,7 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
   });
 
   if (result_1.isErr()) {
-    console.error("[!] エラーが発生しました");
-    console.error("[*] レスポンスのテキストを表示します");
-    console.error(await result_1.error.statusText);
+    console.error("[!] SAMLレスポンスの取得に失敗しました");
     return result_1;
   }
 
@@ -34,7 +32,11 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
   const relay_state = decoded_text.match(relay_state_pattern);
 
   if (!saml_response || !relay_state) {
-    throw new Error("SAMLResponseまたはRelayStateが取得できませんでした");
+    console.error("[!] SAMLResponseまたはRelayStateが取得できませんでした");
+    return err({
+      status: -1,
+      statusText: "SAMLResponseまたはRelayStateが取得できませんでした",
+    });
   }
 
   console.log("[*] SAMLResponseとRelayStateを取得しました");
@@ -59,9 +61,7 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
   );
 
   if (result_2.isErr()) {
-    console.error("[!] エラーが発生しました");
-    console.error("[*] レスポンスのテキストを表示します");
-    console.error(await result_2.error.statusText);
+    console.error("[!] Shibbolethセッションの取得に失敗しました");
     return result_2;
   }
 
@@ -75,6 +75,7 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
   const shibsession = cookie?.match(shibsession_pattern);
 
   if (!shibsession || shibsession[1] === undefined) {
+    console.error("[!] Shibbolethセッションが取得できませんでした");
     return err({
       status: -1,
       statusText: "Shibbolethセッションが取得できませんでした",
@@ -96,9 +97,7 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
   });
 
   if (result_3.isErr()) {
-    console.error("[!] エラーが発生しました");
-    console.error("[*] レスポンスのテキストを表示します");
-    console.error(await result_3.error.statusText);
+    console.error("[!] 必要なパラメータ群の取得に失敗しました");
     return result_3;
   }
 
@@ -113,6 +112,7 @@ const getShibboleth = async ({ token_id }: { token_id: string }) => {
   const GakuNinEncryptedTime = ilis_text.match(GakuNinEncryptedTime_pattern);
 
   if (!mail || !GakuNinEncryptedTime) {
+    console.error("[!] mailまたはGakuNinEncryptedTimeが取得できませんでした");
     return err({
       status: -1,
       statusText: "mailまたはGakuNinEncryptedTimeが取得できませんでした",

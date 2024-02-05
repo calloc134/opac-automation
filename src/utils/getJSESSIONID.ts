@@ -34,8 +34,6 @@ const getJSESSIONID = async ({
 
   if (result.isErr()) {
     console.error("[!] エラーが発生しました");
-    console.error("[*] レスポンスのテキストを表示します");
-    console.error(await result.error.statusText);
     return result;
   }
 
@@ -43,6 +41,7 @@ const getJSESSIONID = async ({
   const cookie = result.value.headers.get("set-cookie");
 
   if (!cookie) {
+    console.error("[!] クッキーが取得できませんでした");
     return err({
       status: -1,
       statusText: "クッキーが取得できませんでした",
@@ -54,6 +53,7 @@ const getJSESSIONID = async ({
   const JSESSIONID = cookie.match(JSESSIONID_pattern);
 
   if (!JSESSIONID || JSESSIONID[1] === undefined) {
+    console.error("[!] JSESSIONIDが取得できませんでした");
     return err({
       status: -1,
       statusText: "JSESSIONIDが取得できませんでした",

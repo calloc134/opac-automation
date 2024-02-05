@@ -22,9 +22,7 @@ const getTokenId = async ({
       });
 
       if (!result_1.ok) {
-        console.error("[!] エラーが発生しました");
-        console.error("[*] レスポンスのテキストを表示します");
-        console.error(await result_1.text());
+        console.error("[!] ログイン時の一時トークンの取得に失敗しました");
         return err({
           status: result_1.status,
           statusText: result_1.statusText,
@@ -82,9 +80,9 @@ const getTokenId = async ({
       });
 
       if (!result_2.ok) {
-        console.error("[!] エラーが発生しました");
-        console.error("[*] レスポンスのテキストを表示します");
-        console.error(await result_2.text());
+        console.error(
+          "[!] 本トークンの取得に失敗しました。ログイン試行に失敗した可能性があります"
+        );
         return err({
           status: result_2.status,
           statusText: result_2.statusText,

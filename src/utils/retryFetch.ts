@@ -12,7 +12,7 @@ const retryFetch = async (
     // redirect:manualの場合はとりあえず成功として判定
     // そうでない場合はresponse.okを使う
     if (!response.ok && options.redirect !== "manual") {
-      console.error("[!] エラーが発生しました");
+      console.error("[!] フェッチの際にエラーが発生しました");
       console.error("[*] レスポンスのテキストを表示します");
       console.error(await response.text());
       return err({
@@ -28,7 +28,7 @@ const retryFetch = async (
       return err({ status: -1, statusText: "リトライ回数を超えました" });
     }
 
-    console.log("[!] エラーが発生しました");
+    console.log("[!] フェッチの際にエラーが発生しました");
     console.log("[*] リトライします");
     // しばらく待ってからリトライする
     await new Promise((resolve) =>
