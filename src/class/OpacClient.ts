@@ -71,9 +71,7 @@ const initOpacClient = async ({
   });
 
   if (result_token_id.isErr()) {
-    console.error("[!] エラーが発生しました");
-    console.error("[*] レスポンスのテキストを表示します");
-    console.error(result_token_id.error.statusText);
+    console.error("[!] ログイントークンの取得に失敗しました");
     return err(result_token_id.error);
   }
 
@@ -84,9 +82,7 @@ const initOpacClient = async ({
   });
 
   if (result_shibboleth.isErr()) {
-    console.error("[!] エラーが発生しました");
-    console.error("[*] レスポンスのテキストを表示します");
-    console.error(result_shibboleth.error.statusText);
+    console.error("[!] shibbolethセッションの取得に失敗しました");
     return err(result_shibboleth.error);
   }
 
@@ -101,9 +97,7 @@ const initOpacClient = async ({
   });
 
   if (result_jsessionid.isErr()) {
-    console.error("[!] エラーが発生しました");
-    console.error("[*] レスポンスのテキストを表示します");
-    console.error(result_jsessionid.error.statusText);
+    console.error("[!] 図書館システムのセッション取得に失敗しました");
     return err(result_jsessionid.error);
   }
 
@@ -128,18 +122,17 @@ const initOpacClient = async ({
         /<table class="opac_data_list_ex">(.|\n|\r)*?<\/table>/gms;
 
       if (result.isErr()) {
-        console.error("[!] エラーが発生しました");
-        console.error("[*] レスポンスのテキストを表示します");
-        console.error(result.error.statusText);
+        console.error("[!] 図書館システムのデータの取得に失敗しました");
         return err({
           status: -1,
-          statusText: "図書館システムへのアクセスに失敗しました",
+          statusText: "図書館システムのデータの取得に失敗しました",
         });
       }
 
       const table_html = (await result.value.text()).match(table_pattern);
 
       if (!table_html) {
+        console.error("[!] テーブル部分のhtmlが取得できませんでした");
         return err({
           status: -1,
           statusText: "テーブル部分のhtmlが取得できませんでした",
@@ -154,9 +147,10 @@ const initOpacClient = async ({
       );
 
       if (!table) {
+        console.error("[!] htmlの解析に失敗しました");
         return err({
           status: -1,
-          statusText: "htmlのパースに失敗しました",
+          statusText: "htmlの解析に失敗しました",
         });
       }
 
@@ -174,6 +168,7 @@ const initOpacClient = async ({
           ?.getAttribute("value");
 
         if (!book_id) {
+          console.error("[!] 書籍IDの取得に失敗しました");
           return err({
             status: -1,
             statusText: "書籍IDの取得に失敗しました",
@@ -213,9 +208,7 @@ const initOpacClient = async ({
       });
 
       if (result.isErr()) {
-        console.error("[!] エラーが発生しました");
-        console.error("[*] レスポンスのテキストを表示します");
-        console.error(result.error.statusText);
+        console.error("[!] 図書館システムへのアクセスに失敗しました");
         return err({
           status: -1,
           statusText: "図書館システムへのアクセスに失敗しました",
@@ -230,7 +223,11 @@ const initOpacClient = async ({
       );
 
       if (!apache_token || apache_token[1] === undefined) {
-        throw new Error("apacheトークンが取得できませんでした");
+        console.error("[!] apacheトークンが取得できませんでした");
+        return err({
+          status: -1,
+          statusText: "apacheトークンが取得できませんでした",
+        });
       }
 
       return ok({
@@ -243,9 +240,7 @@ const initOpacClient = async ({
       const apache_token_result = await this._get_apache_token();
 
       if (apache_token_result.isErr()) {
-        console.error("[!] エラーが発生しました");
-        console.error("[*] レスポンスのテキストを表示します");
-        console.error(apache_token_result.error.statusText);
+        console.error("[!] トークンの取得に失敗しました");
         return err(apache_token_result.error);
       }
 
@@ -263,9 +258,7 @@ const initOpacClient = async ({
       );
 
       if (result.isErr()) {
-        console.error("[!] エラーが発生しました");
-        console.error("[*] レスポンスのテキストを表示します");
-        console.error(result.error.statusText);
+        console.error("[!] 図書館システムへのアクセスに失敗しました");
         return err(result.error);
       }
 
@@ -284,26 +277,21 @@ const initOpacClient = async ({
 
       const extend_error = result_text.match(extend_error_pattern);
 
-      console.debug(extend_result);
-      console.debug(extend_error);
-
       if (!extend_result) {
-        console.error("[!] 延長に失敗しました");
-        console.error(`[!] エラーメッセージ: 不明なエラー`);
+        console.error("[!] 不明なエラーにより、延長に失敗しました");
         return err({
           status: -1,
-          statusText: "延長に失敗しました",
+          statusText: "不明なエラーにより、延長に失敗しました",
         });
       }
 
       // メッセージによって場合分け
       // メッセージに"以下の資料の貸出更新に失敗しました。"が含まれている場合はエラー
       if (extend_result[1].includes("以下の資料の貸出更新に失敗しました。")) {
-        console.error("[!] 延長に失敗しました");
         console.error(
           extend_error
-            ? `[!] エラーメッセージ: ${extend_error[1]}`
-            : "[!] 不明なエラー"
+            ? `[!] 延長に失敗しました。エラーメッセージ: ${extend_error[1]}`
+            : "[!] 不明なエラーにより、延長に失敗しました"
         );
 
         return err({
@@ -315,11 +303,10 @@ const initOpacClient = async ({
         return ok(undefined);
       }
 
-      console.error("[!] 延長に失敗しました");
-      console.error(`[!] エラーメッセージ: 不明な例外`);
+      console.error("[!] 不明な例外により、延長に失敗しました");
       return err({
         status: -1,
-        statusText: "延長に失敗しました",
+        statusText: "不明な例外により、延長に失敗しました",
       });
     },
   };

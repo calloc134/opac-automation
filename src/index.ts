@@ -54,8 +54,6 @@ const main = async () => {
 
   if (result.isErr()) {
     console.error("[!] エラーが発生しました");
-    console.error("[*] レスポンスのテキストを表示します");
-    console.error(result.error.statusText);
     console.error("[*] プログラムを終了します");
     return;
   }
