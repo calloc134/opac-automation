@@ -55,6 +55,36 @@ Shibboleth 認証に対応しています。
 - 図書館システムで貸し出し中の図書を取得
 - 図書館システムで延長が必要な図書を延長
 
+```mermaid
+sequenceDiagram
+    participant ユーザ
+    participant openam
+    participant shibboleth認証サーバ
+    participant iliswave
+
+    ユーザ->>openam: 仮トークン取得要求
+    openam->>ユーザ: 仮トークン返却
+    ユーザ->>openam: ログイン試行
+    openam->>ユーザ: 本トークン返却
+
+    ユーザ->>shibboleth認証サーバ: shibbolethセッション要求
+    shibboleth認証サーバ->>ユーザ: shibbolethセッション返却
+    ユーザ->>shibboleth認証サーバ: その他パラメータ要求
+    shibboleth認証サーバ->>ユーザ: パラメータ返却
+
+    ユーザ->>iliswave: JSESSIONIDの要求
+    iliswave->>ユーザ: JSESSIONIDの返却
+
+    ユーザ->>iliswave: 図書館の個人ページへのアクセス
+    iliswave->>ユーザ: 貸し出し書籍情報の返却
+
+    ユーザ->>iliswave: apache tokenの要求
+    iliswave->>ユーザ: apache tokenの返却
+
+    ユーザ->>iliswave: 本の延長処理
+    iliswave->>ユーザ: 本の延長結果の返却
+```
+
 ### OpenAM にログインしトークンの取得
 
 `getTokenId` 関数で、OpenAM にログインし、トークンを取得します。
