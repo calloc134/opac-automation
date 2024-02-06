@@ -51,7 +51,7 @@ Shibboleth 認証に対応しています。
 
 - OpenAM にログインしトークンの取得
 - Shibboleth にトークンを提示し、Shibboleth セッションとその他パラメータを取得
-- iLisWave に Shibboleth セッションとその他パラメータを提示し、図書館システムへログイン
+- iLisWave に Shibboleth セッションとその他パラメータを提示し、JSESSIONID を取得して図書館システムへログイン
 - 図書館システムで貸し出し中の図書を取得
 - 図書館システムで延長が必要な図書を延長
 
