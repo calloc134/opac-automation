@@ -1,15 +1,12 @@
 // EitherパターンとしてResultを利用したいため、neverthrowを採用
-import { Result, ok, err } from "neverthrow";
+import { Result } from "neverthrow";
 // リトライありのfetchを利用
 import { retryFetch } from "../utils/retryFetch";
 
 /**
  * メッセージクライアントの型
- * @typedef {Object} MessageClientType
- * @property {string} webhook_url - 送信先のwebhookのURL
- * @property {Function} send - メッセージを送信する関数
- * @property {string} message - 送信するメッセージ
- * @property {Promise<Result<Response, { status: number; statusText: string }>>} - 送信結果
+ * @property webhook_url - 送信先のwebhookのURL
+ * @property send - メッセージを送信する関数
  */
 type MessageClientType = {
   webhook_url: string;
@@ -21,13 +18,35 @@ type MessageClientType = {
 
 /**
  * メッセージクライアントを初期化する関数
- * @param {Object} options - オプション
- * @param {string} options.webhook_url - 送信先のwebhookのURL
- * @returns {MessageClientType} メッセージクライアント
+ * @param webhook_url - 送信先のwebhookのURL
+ * @returns メッセージクライアント
  */
-const initMessageClient = ({ webhook_url }: { webhook_url: string }) => {
-  const MessageClient: MessageClientType = {
+const initMessageClient = ({
+  webhook_url,
+}: {
+  webhook_url: string;
+}): MessageClientType => {
+  /**
+   * メッセージクライアント
+   */
+  return {
+    /**
+     * 送信先のwebhookのURL
+     */
     webhook_url,
+
+    /**
+     * メッセージを送信する関数
+     * @param message - 送信するメッセージ
+     * @returns - 送信結果
+     * @example
+     * const result = await MessageClient.send("Hello, world!");
+     * if (result.isErr()) {
+     *  console.error(result.error.statusText);
+     * }
+     * console.log("送信に成功しました");
+     * console.log(result.value);
+     */
     send: async function (this: MessageClientType, message: string) {
       const result = await retryFetch(this.webhook_url, {
         method: "POST",
@@ -40,8 +59,6 @@ const initMessageClient = ({ webhook_url }: { webhook_url: string }) => {
       return result;
     },
   };
-
-  return MessageClient;
 };
 
 export { initMessageClient, MessageClientType };

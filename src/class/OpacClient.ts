@@ -6,14 +6,13 @@ import { getJSESSIONID } from "../utils/getJSESSIONID";
 import { retryFetch } from "../utils/retryFetch";
 import { iliswave_url } from "../env";
 import parse from "node-html-parser";
-/**
- * 図書館システムにアクセスするクライアント
- * 内部でOpenAM/Shibboleth/IlisWaveにアクセスする
- *
- * @user_id ユーザーID
- * @password パスワード
- */
 
+/**
+ * 図書館システムのクライアントの型
+ * @property token_id - ログイン時のトークン
+ * @property shibboleth_session - Shibbolethセッション
+ * @property opac_sessionid - 図書館システムのセッションID
+ */
 type OpacClientType = {
   token_id: string;
   shibboleth_session: string;
@@ -57,6 +56,11 @@ type OpacClientType = {
   >;
 };
 
+/**
+ * 図書館システムのクライアントを初期化する関数
+ * @param user_id - ユーザーID
+ * @param password - パスワード
+ */
 const initOpacClient = async ({
   user_id,
   password,
@@ -102,12 +106,38 @@ const initOpacClient = async ({
   }
 
   const OpacClient: OpacClientType = {
+    /**
+     * ログイントークン
+     */
     token_id: result_token_id.value.tokenId,
+    /**
+     * Shibbolethセッション
+     */
     shibboleth_session: result_shibboleth.value.shibboleth_session,
+    /**
+     * 図書館システムのセッションID
+     */
     opac_sessionid: result_jsessionid.value.opac_sessionid,
 
-    // 図書館システムにアクセスして本のリストを返却する関数の定義
-    get_lental_list: async function () {
+    /**
+     * 貸し出し中の本の一覧を取得する関数
+     * @returns 貸し出し中の本の一覧
+     * @example
+     * const lental_list = await OpacClient.get_lental_list();
+     * if (lental_list.isErr()) {
+     *  console.error(lental_list.error.statusText);
+     * }
+     * console.log(lental_list.value);
+     */
+    get_lental_list: async function (): Promise<
+      Result<
+        Book[],
+        {
+          status: number;
+          statusText: string;
+        }
+      >
+    > {
       const cookie = `JSESSIONID=${this.opac_sessionid}; iPlanetDirectoryPro=${this.token_id}; _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370=${this.shibboleth_session};`;
 
       const result = await retryFetch(`${iliswave_url}/webopac/lenlst.do`, {
@@ -196,8 +226,27 @@ const initOpacClient = async ({
       return ok(book_data_list);
     },
 
-    // 本を延長するためのトークンを取得する関数の定義
-    _get_apache_token: async function () {
+    /**
+     * apacheトークンを取得する関数
+     * @returns apacheトークン
+     * @example
+     * const apache_token = await OpacClient._get_apache_token();
+     * if (apache_token.isErr()) {
+     *  console.error(apache_token.error.statusText);
+     * }
+     * console.log(apache_token.value);
+     */
+    _get_apache_token: async function (): Promise<
+      Result<
+        {
+          token: string;
+        },
+        {
+          status: number;
+          statusText: string;
+        }
+      >
+    > {
       const cookie = `JSESSIONID=${this.opac_sessionid}; iPlanetDirectoryPro=${this.token_id}; _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370=${this.shibboleth_session};`;
 
       const result = await retryFetch(`${iliswave_url}/webopac/lenlst.do`, {
@@ -235,7 +284,17 @@ const initOpacClient = async ({
       });
     },
 
-    // 本を延長する関数の定義
+    /**
+     * 書籍を延長する関数
+     * @param book_id - 延長する書籍のID
+     * @returns 延長結果
+     * @example
+     * const result = await OpacClient.extend_book({ book_id: "123456" });
+     * if (result.isErr()) {
+     *  console.error(result.error.statusText);
+     * }
+     * console.log("延長に成功しました");
+     */
     extend_book: async function ({ book_id }) {
       const apache_token_result = await this._get_apache_token();
 
