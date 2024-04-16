@@ -9,9 +9,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "vite-node": "^1.0.4"
-  },
   "dependencies": {
     "neverthrow": "^6.1.0",
     "node-html-parser": "^6.1.11"
