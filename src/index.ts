@@ -61,11 +61,11 @@ const main = async () => {
 
   for (const book of lental_list_maybe.value) {
     console.log(
-      `${book.detail}\n├── 書籍番号: ${book.book_id}\n├── キャンパス: ${book.campus}\n├── 貸出日: ${book.lend_date}\n└── 返却期限: ${book.return_date}`
+      `${book.detail}\n├── 書籍番号: ${book.book_id}\n├── キャンパス: ${book.campus}\n├── 貸出日: ${book.lend_date}\n└── 返却期限: ${book.return_date}\n${book.image_url}`
     );
 
     await MessageClient.send(
-      `:book: ${book.detail}\n├── 書籍番号: ${book.book_id}\n├── キャンパス: ${book.campus}\n├── 貸出日: ${book.lend_date}\n└── 返却期限: ${book.return_date}`
+      `:book: ${book.detail}\n├── 書籍番号: ${book.book_id}\n├── キャンパス: ${book.campus}\n├── 貸出日: ${book.lend_date}\n└── 返却期限: ${book.return_date}\n${book.image_url}`
     );
 
     if (book.status === "延滞") {

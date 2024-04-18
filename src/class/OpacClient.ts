@@ -185,7 +185,7 @@ const initOpacClient = async ({
       }
 
       // 一番上の行はヘッダなので除外し、各行に対して処理を行う
-      const book_data_list: Book[] = new Array<Book>();
+      const book_data_list: Omit<Book, "image_url">[] = [];
 
       // mapにこだわりすぎないことも大事
       for (const tr of table.querySelectorAll("tr").slice(1)) {
@@ -223,7 +223,59 @@ const initOpacClient = async ({
         book_data_list.push(book_data);
       }
 
-      return ok(book_data_list);
+      // それぞれの書籍について画像URLを取得する
+      const book_data_list_with_image: Book[] = [];
+
+      for (const book_data of book_data_list) {
+        const headers = {
+          Referer: "https://opac.meijo-u.ac.jp/index.php",
+        };
+
+        const data = new URLSearchParams({
+          action: "v3search_action_main_opac",
+          search_mode: "detail",
+          op_param: `lenid=${book_data.book_id}`,
+          block_id: "296",
+        });
+
+        const response = await fetch("https://opac.meijo-u.ac.jp/index.php", {
+          method: "POST",
+          headers: headers,
+          body: data,
+        });
+
+        if (!response.ok) {
+          console.error(
+            `[!] 書籍詳細の取得に失敗しました。ステータスコード: ${response.status}`
+          );
+          return err({
+            status: response.status,
+            statusText: `書籍詳細の取得に失敗しました。ステータスコード: ${response.status}`,
+          });
+        }
+
+        const responseText = await response.text();
+
+        // Use regular expressions to extract the required information from the response
+        const pattern = /opacImgdtlAjax\("([0-9a-z]+)"/;
+        const match = pattern.exec(responseText);
+
+        if (!match) {
+          console.error("[!] ISBNが取得できませんでした");
+          return err({
+            status: -1,
+            statusText: "書籍に対応するISBNが取得できませんでした。",
+          });
+        }
+
+        const image_url = `https://mylib.meijo-u.ac.jp/webopac/imgview.do?isbn=${match[1]}`;
+        book_data_list_with_image.push({
+          ...book_data,
+          image_url,
+        });
+      }
+
+      return ok(book_data_list_with_image);
     },
 
     /**
