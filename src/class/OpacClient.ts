@@ -1,5 +1,5 @@
 import { Result, err, ok } from "neverthrow";
-import { Book } from "../types/Book";
+import { Book, BookWithDetails } from "../types/Book";
 import { getTokenId } from "../utils/getTokenId";
 import { getShibboleth } from "../utils/getShibboleth";
 import { getJSESSIONID } from "../utils/getJSESSIONID";
@@ -21,6 +21,16 @@ type OpacClientType = {
   get_lental_list: (this: OpacClientType) => Promise<
     Result<
       Book[],
+      {
+        status: number;
+        statusText: string;
+      }
+    >
+  >;
+
+  get_lental_list_with_details: (this: OpacClientType) => Promise<
+    Result<
+      BookWithDetails[],
       {
         status: number;
         statusText: string;
@@ -120,14 +130,14 @@ const initOpacClient = async ({
     opac_sessionid: result_jsessionid.value.opac_sessionid,
 
     /**
-     * 貸し出し中の本の一覧を取得する関数
-     * @returns 貸し出し中の本の一覧
+     * 貸出中の本の一覧を取得する関数
+     * 延長のためのデータのみを取得する
+     * @returns 貸出中の本の一覧
      * @example
      * const lental_list = await OpacClient.get_lental_list();
      * if (lental_list.isErr()) {
-     *  console.error(lental_list.error.statusText);
+     * console.error(lental_list.error.statusText);
      * }
-     * console.log(lental_list.value);
      */
     get_lental_list: async function (): Promise<
       Result<
@@ -185,7 +195,7 @@ const initOpacClient = async ({
       }
 
       // 一番上の行はヘッダなので除外し、各行に対して処理を行う
-      const book_data_list: Omit<Book, "image_url">[] = [];
+      const book_data_list: Book[] = [];
 
       // mapにこだわりすぎないことも大事
       for (const tr of table.querySelectorAll("tr").slice(1)) {
@@ -208,9 +218,110 @@ const initOpacClient = async ({
         const book_data = {
           // 書籍の詳細プロパティ
           detail: book_data_raw[7].text,
-          // 貸し出ししたキャンパス
+          // 書籍ID
+          book_id,
+          // ステータス
+          status: book_data_raw[2].text as "" | "確認" | "延滞",
+        };
+
+        book_data_list.push(book_data);
+      }
+
+      return ok(book_data_list);
+    },
+    /**
+     * 貸出中の本の一覧を取得する関数
+     * 詳細も含めて取得する
+     * @returns 貸出中の本の一覧
+     * @example
+     * const lental_list = await OpacClient.get_lental_list_with_details();
+     * if (lental_list.isErr()) {
+     *  console.error(lental_list.error.statusText);
+     * }
+     * console.log(lental_list.value);
+     */
+    get_lental_list_with_details: async function (): Promise<
+      Result<
+        BookWithDetails[],
+        {
+          status: number;
+          statusText: string;
+        }
+      >
+    > {
+      const cookie = `JSESSIONID=${this.opac_sessionid}; iPlanetDirectoryPro=${this.token_id}; _shibsession_64656661756c7468747470733a2f2f6d796c69622e6d65696a6f2d752e61632e6a702f73686962626f6c6574682d7370=${this.shibboleth_session};`;
+
+      const result = await retryFetch(`${iliswave_url}/webopac/lenlst.do`, {
+        method: "GET",
+        headers: {
+          Cookie: cookie,
+        },
+      });
+
+      // 正規表現を用いてテーブル部分だけのhtmlを抽出
+      const table_pattern =
+        /<table class="opac_data_list_ex">(.|\n|\r)*?<\/table>/gms;
+
+      if (result.isErr()) {
+        console.error("[!] 図書館システムのデータの取得に失敗しました");
+        return err({
+          status: -1,
+          statusText: "図書館システムのデータの取得に失敗しました",
+        });
+      }
+
+      const table_html = (await result.value.text()).match(table_pattern);
+
+      if (!table_html) {
+        console.error("[!] テーブル部分のhtmlが取得できませんでした");
+        return err({
+          status: -1,
+          statusText: "テーブル部分のhtmlが取得できませんでした",
+        });
+      }
+
+      // 改行とタブの削除
+      const table_html_str = table_html[0].replace(/\n|\r|\t/g, "");
+
+      const table = parse(table_html_str).querySelector(
+        "table.opac_data_list_ex"
+      );
+
+      if (!table) {
+        console.error("[!] htmlの解析に失敗しました");
+        return err({
+          status: -1,
+          statusText: "htmlの解析に失敗しました",
+        });
+      }
+
+      // 一番上の行はヘッダなので除外し、各行に対して処理を行う
+      const book_data_list: Omit<BookWithDetails, "image_url">[] = [];
+
+      // mapにこだわりすぎないことも大事
+      for (const tr of table.querySelectorAll("tr").slice(1)) {
+        // 一行のデータを取得する
+        const book_data_raw = tr.querySelectorAll("td");
+
+        // 書籍IDを取得
+        const book_id = book_data_raw[1]
+          .querySelector("input")
+          ?.getAttribute("value");
+
+        if (!book_id) {
+          console.error("[!] 書籍IDの取得に失敗しました");
+          return err({
+            status: -1,
+            statusText: "書籍IDの取得に失敗しました",
+          });
+        }
+
+        const book_data = {
+          // 書籍の詳細プロパティ
+          detail: book_data_raw[7].text,
+          // 貸出したキャンパス
           campus: book_data_raw[3].text,
-          // 貸し出し日
+          // 貸出日
           lend_date: book_data_raw[5].text,
           // 返却期限
           return_date: book_data_raw[4].text,
@@ -224,7 +335,7 @@ const initOpacClient = async ({
       }
 
       // それぞれの書籍について画像URLを取得する
-      const book_data_list_with_image: Book[] = [];
+      const book_data_list_with_image: BookWithDetails[] = [];
 
       for (const book_data of book_data_list) {
         const headers = {
