@@ -139,6 +139,9 @@ const main = async () => {
         ":white_check_mark: │ この本は本日が返却期限です。"
       );
     }
+
+    // 少し待機
+    await new Promise((resolve) => setTimeout(resolve, 300));
   }
 
   console.log("[*] 貸出図書の詳細を含めた一覧を表示しました");
