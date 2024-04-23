@@ -57,7 +57,7 @@ type OpacClientType = {
     }
   ) => Promise<
     Result<
-      void,
+      Result<undefined, { errorText: string }>,
       {
         status: number;
         statusText: string;
@@ -516,13 +516,12 @@ const initOpacClient = async ({
             : "[!] 不明なエラーにより、延長に失敗しました"
         );
 
-        return err({
-          status: -1,
-          statusText: "延長に失敗しました",
-        });
+        return ok(
+          err({ errorText: extend_error ? extend_error[1] : "不明なエラー" })
+        );
       } else if (extend_result[1].includes("以下の資料を貸出更新しました。")) {
         console.log("[+] 延長に成功しました");
-        return ok(undefined);
+        return ok(ok(undefined));
       }
 
       console.error("[!] 不明な例外により、延長に失敗しました");

@@ -70,9 +70,9 @@ const main = async () => {
 
   // 延長する本があれば延長処理を行う
   if (extend_list.length !== 0) {
-    console.log("[*] ${extend_list.length}冊の延長処理を開始します");
+    console.log(`[*] ${extend_list.length}冊の延長処理を開始します`);
     await MessageClient.send(
-      ":books: │ ${extend_list.length}冊の延長処理を開始します"
+      `:books: │ ${extend_list.length}冊の延長処理を開始します`
     );
 
     for (const book_id of extend_list) {
@@ -89,6 +89,20 @@ const main = async () => {
           ":warning: │ エラーが発生しました。プログラムを終了します"
         );
         return;
+      }
+
+      if (result.value.isErr()) {
+        console.error(
+          `[*] エラーが発生しました: ${result.value.error.errorText}`
+        );
+        await MessageClient.send(
+          `:warning: │ エラーが発生しました: ${result.value.error.errorText}`
+        );
+      } else {
+        console.log(`[*] ${book_id.detail} の延長処理が完了しました`);
+        await MessageClient.send(
+          `:white_check_mark: │ ${book_id.detail} の延長処理が完了しました`
+        );
       }
     }
 
